@@ -142,7 +142,7 @@ class ReportsController extends Controller
     }
 
     public function statement(){
-        // Statements go to all clients who have had new invoices or payments in the last month or who have an outstanding balance
+        // Statements go to clients in respect of projects which had new invoices or payments in the last month or who have an outstanding balance
         $clients=Client::with('invoices','payments')->where('account','<>',0)->orWhereHas('invoices',function($q){
             $q->where('invoicedate','>=',date('Y-m-d',strtotime('-1 month')));
         })->orWhereHas('payments',function($q){

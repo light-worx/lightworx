@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Lightworx\FilamentSettings\FilamentSettingsPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -40,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
             ])
             ->plugins([
+                FilamentSettingsPlugin::make()
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -56,9 +58,6 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->userMenuItems([
-                Action::make('settings')
-                    ->url('/admin/settings')
-                    ->icon('heroicon-o-cog-6-tooth'),
                 Action::make('website')
                     ->label('Website')
                     ->url('/')
