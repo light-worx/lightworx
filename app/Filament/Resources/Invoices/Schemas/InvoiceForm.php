@@ -16,20 +16,19 @@ class InvoiceForm
             ->components([
                 Select::make('project_id')
                     ->relationship('project', 'id')
+                    ->selectablePlaceholder(false)
                     ->options(Project::query()->pluck('project', 'id'))
                     ->required(),
                 TextInput::make('rate')->label('Hourly rate')
                     ->numeric()
-                    ->default(function (){
-                        return setting('hourly_rate');
-                    }),
+                    ->default(setting('hourly_rate')),
                 TextEntry::make('invoicedate')
                     ->hiddenOn('create')
                     ->label('Date invoice sent')
                     ->placeholder('Not sent yet'),
-                TextInput::make('total')
+                TextEntry::make('total')
+                    ->numeric('2')
                     ->hiddenOn('create')
-                    ->readonly(),
             ]);
     }
 }

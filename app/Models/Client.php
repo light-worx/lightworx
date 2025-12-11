@@ -31,4 +31,11 @@ class Client extends Model
         return $this->contact_firstname . " " . $this->contact_surname;
     }
 
+    public function getBalanceAttribute()
+    {
+        $totalInvoiced = $this->invoices->sum->total;
+        $totalPaid = $this->payments->sum('amount');
+        return $totalInvoiced - $totalPaid;
+    }
+
 }

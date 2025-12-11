@@ -35,8 +35,7 @@ class InvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            'App\Filament\Resources\Invoices\RelationManagers\HoursRelationManager',
-            'App\Filament\Resources\Invoices\RelationManagers\DisbursementsRelationManager'
+            'App\Filament\Resources\Invoices\RelationManagers\InvoiceItemsRelationManager'
         ];
     }
 

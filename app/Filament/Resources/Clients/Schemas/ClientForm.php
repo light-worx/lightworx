@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Clients\Schemas;
 
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 
 class ClientForm
@@ -19,7 +20,11 @@ class ClientForm
                 TextInput::make('contact_firstname')
                     ->required(),
                 TextInput::make('contact_surname')
-                    ->required()
+                    ->required(),
+                TextEntry::make('balance')
+                    ->numeric('2')
+                    ->label('Balance outstanding')
+                    ->disabled(),
             ]);
     }
 }

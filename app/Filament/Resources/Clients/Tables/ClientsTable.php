@@ -17,8 +17,9 @@ class ClientsTable
                 TextColumn::make('client')
                     ->searchable(),
                 TextColumn::make('contact'),
-                TextColumn::make('account')
-                    ->searchable(),
+                TextColumn::make('balance')
+                    ->label('Balance')
+                    ->numeric('2'),
             ])
             ->filters([
                 //

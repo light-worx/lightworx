@@ -15,6 +15,7 @@ class PaymentForm
         return $schema
             ->components([
                 DatePicker::make('paymentdate')
+                    ->label('Date')
                     ->default(now())
                     ->required(),
                 Select::make('client_id')

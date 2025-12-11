@@ -7,20 +7,20 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('hours', function($table)
+        Schema::create('invoice_items', function($table)
         {
             $table->engine = 'InnoDB';
             $table->increments('id')->unsigned();
-            $table->date('hourdate');
-            $table->integer('hourable_id');
-            $table->string('hourable_type');
+            $table->date('itemdate');
+            $table->integer('invoice_id');
             $table->string('details');
-            $table->decimal('hours', 5,2)->nullable();
+            $table->decimal('quantity', 5,2);
+            $table->decimal('unit_price', 6,2)->nullable();
         });
     }
     
     public function down()
     {
-        Schema::dropIfExists('hours');
+        Schema::dropIfExists('invoice_items');
     }
 };

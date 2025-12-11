@@ -17,22 +17,20 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class DisbursementsRelationManager extends RelationManager
+class InvoiceItemsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'disbursements';
+    protected static string $relationship = 'invoiceitems';
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                DatePicker::make('disbursementdate'),
-                TextInput::make('disbursable_id')
+                TextInput::make('invoice_id')
                     ->required()
                     ->numeric(),
-                TextInput::make('disbursable_type'),
                 TextInput::make('details')
                     ->required(),
-                TextInput::make('disbursement')
+                TextInput::make('hours')
                     ->numeric(),
             ]);
     }
@@ -40,19 +38,13 @@ class DisbursementsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('id')
             ->columns([
-                TextColumn::make('disbursementdate')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('disbursable_id')
+                TextColumn::make('invoice_id')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('disbursable_type')
-                    ->searchable(),
                 TextColumn::make('details')
                     ->searchable(),
-                TextColumn::make('disbursement')
+                TextColumn::make('hours')
                     ->numeric()
                     ->sortable(),
             ])
@@ -75,4 +67,5 @@ class DisbursementsRelationManager extends RelationManager
                 ]),
             ]);
     }
+
 }

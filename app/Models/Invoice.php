@@ -5,26 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Invoice extends Model
 {
     
     public $table = 'invoices';
     protected $guarded = ['id'];
+    protected $appends = ['total'];
 
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    public function hours(): MorphMany
+    public function invoiceitems(): HasMany
     {
-        return $this->morphMany(Hour::class, 'hourable');
+        return $this->hasMany(InvoiceItem::class, 'invoice_id');
     }
 
-    public function disbursements(): MorphMany
+    public function getTotalAttribute()
     {
-        return $this->morphMany(Disbursement::class, 'disbursable');
+        return $this->invoiceitems->sum->total;
     }
 }

@@ -13,141 +13,178 @@ use stdClass;
 
 class ReportsController extends Controller
 {
-    public $pdf, $title, $subtitle, $page, $logo, $hublogo, $widelogo;
-
-    public function __construct(){
-        $this->pdf = new tFPDF();
-        $this->pdf->AddFont('DejaVu','','DejaVuSans.ttf',true);
-        $this->pdf->AddFont('DejaVu', 'B', 'DejaVuSans-Bold.ttf', true);
-        $this->pdf->AddFont('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', true);
-        $this->pdf->AddFont('DejaVuCond','','DejaVuSansCondensed.ttf',true);
-        $this->pdf->AddFont('DejaVuCond', 'B', 'DejaVuSansCondensed-Bold.ttf', true);
-        $this->title="";
-        $this->subtitle="";
-        $this->page=0;
-        $this->logo=url('/') . "/lightworx/images/lightworx.png";
-    }
-
     public function quote($id){
         $this->invoice($id,"Quotation");
     }
 
+    public function letterhead($title, $type, $clientName, $clientContact,$clientEmail){
+        $pdf = new tFPDF();
+        $pdf->AddFont('DejaVu','','DejaVuSans.ttf',true);
+        $pdf->AddFont('DejaVu', 'B', 'DejaVuSans-Bold.ttf', true);
+        $pdf->AddFont('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', true);
+        $pdf->AddFont('DejaVuCond','','DejaVuSansCondensed.ttf',true);
+        $pdf->AddFont('DejaVuCond', 'B', 'DejaVuSansCondensed-Bold.ttf', true);
+        $logo=url('/') . "/lightworx/images/lightworx.png";
+        $pdf->AddPage('P');
+        $pdf->SetTitle($title);
+        $pdf->SetAutoPageBreak(true, 0);
+        $pdf->SetFont('DejaVu', 'B', 12);
+        $pdf->Image($logo,168,8,45);
+        $pdf->text(15, 10, $type);
+        $pdf->SetTextColor(100,100,100);
+        $pdf->text(15, 25, "Lightworx");
+        $pdf->SetFont('DejaVu', '', 10);
+        $pdf->text(15, 30, "Open source solutions");
+        $pdf->text(15, 34, "www.lightworx.co.za");
+        $pdf->text(15, 38, setting('email_address'));
+        $pdf->SetTextColor(0,0,0);
+
+        // Client
+        $pdf->SetFont('DejaVu', 'B', 10);
+        $pdf->text(15,70,$clientName);
+        $pdf->SetFont('DejaVu', '', 10);
+        $pdf->text(15,75,"Attention: " . $clientContact);
+        $pdf->text(15,80,$clientEmail);
+
+        // Banking
+        $pdf->SetFont('DejaVu', 'B', 11);
+        $pdf->text(17,269,"Bank details");
+        $pdf->SetFont('DejaVu', '', 10);
+        $banklines=explode(',',setting('bank_details'));
+        foreach ($banklines as $i=>$bank){
+            $pdf->text(17,274+$i*4,$bank);
+        }
+        return $pdf;
+    }
+
     public function invoice ($id,$type="Invoice",$email=false){
         if ($type=="Invoice"){
-            $inv=Invoice::with('hours','disbursements','project.client')->where('id',$id)->first();
+            $inv=Invoice::with('invoiceitems','project.client')->where('id',$id)->first();
         } else {
-            $inv=Quote::with('hours','disbursements','project.client')->where('id',$id)->first();
+            // $inv=Quote::with('invoiceitems','project.client')->where('id',$id)->first();
         }
-        $this->pdf->AddPage('P');
-        $this->title="Light worx " . $type . " " . $inv->id . " - " . date("j M Y");
-        $this->pdf->SetTitle($this->title);
-        $this->pdf->SetAutoPageBreak(true, 0);
-        $this->pdf->SetFont('DejaVu', 'B', 12);
-        $this->pdf->Image($this->logo,168,8,45);
-        $this->pdf->text(15, 10, $type);
-        $this->pdf->SetTextColor(100,100,100);
-        $this->pdf->text(15, 25, "Lightworx");
-        $this->pdf->SetFont('DejaVu', '', 10);
-        $this->pdf->text(15, 30, "Open source systems and solutions");
-        $this->pdf->text(15, 34, "www.lightworx.co.za");
-        $this->pdf->text(15, 38, setting('email_address'));
-        $this->pdf->SetTextColor(0,0,0);
-        $filename=$this->title;
-        $this->pdf->SetFont('DejaVu', 'B', 10);
-        $this->pdf->text(15,70,$inv->project->client->client);
-        $this->pdf->SetFont('DejaVu', '', 10);
-        $this->pdf->text(15,75,"Attention: " . $inv->project->client->contact_firstname . " " . $inv->project->client->contact_surname);
-        $this->pdf->text(15,80,$inv->project->client->contact_email);
-        $this->pdf->text(145,70,$type . " No:");
-        $this->pdf->setxy(150,68.8);
-        $this->pdf->cell(52,0,$inv->id,0,0,'R');
-        $this->pdf->text(145,75,"Date:");
-        $this->pdf->setxy(150,73.8);
-        $this->pdf->cell(52,0,date('d M Y'),0,0,'R');
-        $this->pdf->text(145,80,"Reference:");
-        $this->pdf->setxy(150,78.8);
+        $title="Light worx " . $type . " " . $inv->id . " - " . date("j M Y");
+        $pdf=$this->letterhead($title,$type,$inv->project->client->client,$inv->project->client->contact_firstname . " " . $inv->project->client->contact_surname, $inv->project->client->contact_email);
+
+        $pdf->text(145,70,$type . " No:");
+        $pdf->setxy(150,68.8);
+        $pdf->cell(52,0,$inv->id,0,0,'R');
+        $pdf->text(145,75,"Date:");
+        $pdf->setxy(150,73.8);
+        $pdf->cell(52,0,date('d M Y'),0,0,'R');
+        $pdf->text(145,80,"Reference:");
+        $pdf->setxy(150,78.8);
         if ($type=="Invoice"){
-            $this->pdf->cell(52,0,"Inv " . $inv->id,0,0,'R');
+            $pdf->cell(52,0,"Inv " . $inv->id,0,0,'R');
         } else {
-            $this->pdf->cell(52,0,"Quote " . $inv->id,0,0,'R');
+            $pdf->cell(52,0,"Quote " . $inv->id,0,0,'R');
         }
         $yy=117;
         $total=0;
-        if (count($inv->hours)){
-            $this->pdf->SetFont('DejaVu', 'B', 10);
-            $this->pdf->text(15,$yy,"Date");
-            $this->pdf->text(35,$yy,"Description");
-            $this->pdf->text(140,$yy,"Hours");
-            $this->pdf->text(160,$yy,"Rate (R)");
-            $this->pdf->text(185,$yy,"Amount");
-            $this->pdf->SetFont('DejaVu', '', 10);
+        if (count($inv->invoiceitems)){
+            $pdf->SetFont('DejaVu', 'B', 10);
+            $pdf->text(15,$yy,"Date");
+            $pdf->text(35,$yy,"Description");
+            $pdf->text(140,$yy,"Hours");
+            $pdf->text(160,$yy,"Rate (R)");
+            $pdf->text(185,$yy,"Amount");
+            $pdf->SetFont('DejaVu', '', 10);
             $yy=$yy+6;
-            foreach ($inv->hours as $hour){
-                $this->pdf->text(15,$yy,date('d M',strtotime($hour->hourdate)));
-                $this->pdf->text(35,$yy,$hour->details);
-                $this->pdf->setxy(140,$yy-1.2);
-                $this->pdf->cell(12,0,$hour->hours,0,0,'C');
-                $this->pdf->setxy(160,$yy-1.2);
-                $this->pdf->cell(16,0,$inv->rate,0,0,'C');
-                $this->pdf->setxy(185,$yy-1.2);
-                $this->pdf->cell(17,0,number_format($hour->hours * $inv->rate,2),0,0,'R');
-                $total=$total + ($hour->hours *$inv->rate);
-                $yy=$yy+5;
-            }
-        }
-        if (count($inv->disbursements)){
-            $yy=$yy+1;
-            $this->pdf->SetFont('DejaVu', 'B', 10);
-            $this->pdf->text(15,$yy,"Disbursements");
-            $this->pdf->SetFont('DejaVu', '', 10);
-            $yy=$yy+6;
-            foreach ($inv->disbursements as $disbursement){
-                $this->pdf->text(15,$yy,$disbursement->details);
-                $this->pdf->setxy(185,$yy-1.2);
-                $this->pdf->cell(17,0,number_format($disbursement->disbursement,2),0,0,'R');
-                $total=$total + $disbursement->disbursement;
+            foreach ($inv->invoiceitems as $item){
+                $pdf->text(15,$yy,date('d M',strtotime($item->itemdate    )));
+                $pdf->text(35,$yy,$item->details);
+                $pdf->setxy(140,$yy-1.2);
+                $pdf->cell(12,0,$item->quantity,0,0,'C');
+                $pdf->setxy(160,$yy-1.2);
+                $pdf->cell(16,0,$item->unit_price,0,0,'C');
+                $pdf->setxy(185,$yy-1.2);
+                $pdf->cell(17,0,number_format($item->quantity * $item->unit_price,2),0,0,'R');
+                $total=$total + ($item->quantity *$item->unit_price);
                 $yy=$yy+5;
             }
         }
         $yy = $yy + 2;
-        $this->pdf->SetFont('DejaVu', 'B', 10);
-        $this->pdf->text(15,$yy,"Total");
-        $this->pdf->setxy(185,$yy-1.2);
-        $this->pdf->cell(17,0,"R " . number_format($total,2),0,0,'R');
-        $this->pdf->text(17,269,"Bank details");
-        $this->pdf->SetFont('DejaVu', '', 10);
-        $banklines=explode(',',setting('bank_details'));
-        foreach ($banklines as $i=>$bank){
-            $this->pdf->text(17,274+$i*4,$bank);
-        }
+        $pdf->SetFont('DejaVu', 'B', 10);
+        $pdf->text(15,$yy,"Total");
+        $pdf->setxy(185,$yy-1.2);
+        $pdf->cell(17,0,"R " . number_format($total,2),0,0,'R');
 
-        $this->pdf->RoundedRect(15,90,186,15,1,'1234','F');
-        $this->pdf->SetTextColor(255,255,255);
-        $this->pdf->SetFont('DejaVu', '', 9);
-        $this->pdf->text(17,95,$type);
-        $this->pdf->text(37,95,"Project");
-        $this->pdf->text(112,95,"Date");
-        $this->pdf->text(167,95,"Total");
-        $this->pdf->SetFont('DejaVu', 'B', 11);
-        $this->pdf->text(17,101,$inv->id);
-        $this->pdf->text(37,101,$inv->project->project);
-        $this->pdf->text(112,101,date('d M Y'));
-        $this->pdf->text(167,101,"R " . number_format($total,2));
+        $pdf->RoundedRect(15,90,186,15,1,'1234','F');
+        $pdf->SetTextColor(255,255,255);
+        $pdf->SetFont('DejaVu', '', 9);
+        $pdf->text(17,95,$type);
+        $pdf->text(37,95,"Project");
+        $pdf->text(112,95,"Date");
+        $pdf->text(167,95,"Total");
+        $pdf->SetFont('DejaVu', 'B', 11);
+        $pdf->text(17,101,$inv->id);
+        $pdf->text(37,101,$inv->project->project);
+        $pdf->text(112,101,date('d M Y'));
+        $pdf->text(167,101,"R " . number_format($total,2));
         if ($email){
-            return $this->pdf->Output('S',$filename);
+            return $pdf->Output('S',$title);
         } else {    
-            $this->pdf->Output('I',$filename);
+            $pdf->Output('I',$title);
             exit;
         }
     }
 
     public function statement(){
-        // Statements go to clients in respect of projects which had new invoices or payments in the last month or who have an outstanding balance
-        $clients=Client::with('invoices','payments')->where('account','<>',0)->orWhereHas('invoices',function($q){
-            $q->where('invoicedate','>=',date('Y-m-d',strtotime('-1 month')));
-        })->orWhereHas('payments',function($q){
-            $q->where('paymentdate','>=',date('Y-m-d',strtotime('-1 month')));
-        })->get();
-        dd($clients);
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthEnd = now()->endOfMonth()->toDateString();
+        $clientsOwing = Client::get()->filter(function ($client) {
+            return $client->balance > 0;
+        });
+        $clients = Client::query()
+            ->where(function ($query) use ($monthStart, $monthEnd) {
+                $query->whereHas('invoices', function ($q) use ($monthStart, $monthEnd) {
+                    $q->whereBetween('invoicedate', [$monthStart, $monthEnd]);
+                })
+                ->orWhereHas('payments', function ($q) use ($monthStart, $monthEnd) {
+                    $q->whereBetween('paymentdate', [$monthStart, $monthEnd]);
+                });
+            })
+            ->get()
+            ->merge($clientsOwing)
+            ->unique('id')
+            ->values();
+        foreach ($clients as $client){
+            $openingBalance = $client->invoices()
+                ->where('invoicedate', '<', $monthStart)
+                ->get()
+                ->sum->total
+                -
+                $client->payments()
+                ->where('paymentdate', '<', $monthStart)
+                ->sum('amount');
+            $details=array();
+            $invoices = $client->invoices()
+                ->whereBetween('invoicedate', [$monthStart, $monthEnd])
+                ->with('invoiceitems')
+                ->get();
+            foreach ($invoices as $invoice){
+                $details[strtotime($invoice->invoicedate)] = [
+                    'details' => 'Invoice ' . $invoice->id,
+                    'date' => $invoice->invoicedate,
+                    'amount' => $invoice->total
+                ];
+            }
+            $payments = $client->payments()->whereBetween('paymentdate', [$monthStart, $monthEnd])->get();
+            foreach ($payments as $payment){
+                $details[strtotime($payment->paymentdate) + 1] = [
+                    'details' => 'Payment - thank you',
+                    'date' => $payment->paymentdate,
+                    'amount' => -$payment->amount
+                ];
+            }
+            $title="Statement - " . $client->client . " - " . date("j M Y");
+            $pdf = $this->letterhead($title,"Statement",$client->client,$client->contact_firstname . " " . $client->contact_surname, $client->contact_email);
+            $pdf->Output('I',$title);
+        }
+        $closingBalance = $client->balance;
+    }
+
+    public function statementPdf($clientId){
+        $client = Client::findOrFail($clientId);
     }
 }

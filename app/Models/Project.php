@@ -21,4 +21,13 @@ class Project extends Model
         return $this->belongsTo(Client::class);
     }
 
+    public function getBalanceAttribute()
+    {
+        return $this->invoices->sum->total;
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }

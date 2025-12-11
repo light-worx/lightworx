@@ -7,20 +7,18 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('disbursements', function($table)
+        Schema::create('client_logs', function($table)
         {
             $table->engine = 'InnoDB';
             $table->increments('id')->unsigned();
-            $table->date('disbursementdate');
-            $table->integer('disbursable_id');
-            $table->string('disbursable_type');
+            $table->date('logdate');
+            $table->integer('client_id');
             $table->string('details');
-            $table->decimal('disbursement', 5,2)->nullable();
         });
     }
     
     public function down()
     {
-        Schema::dropIfExists('disbursements');
+        Schema::dropIfExists('client_logs');
     }
 };
