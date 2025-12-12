@@ -16,7 +16,8 @@ Route::middleware(['web'])->controller('\App\Http\Controllers\HomeController')->
 Route::middleware(['web'])->controller('\App\Http\Controllers\ReportsController')->group(function () {
     Route::get('/admin/reports/invoices/{id}/{email?}', 'invoice')->name('invoice');
     Route::get('/admin/reports/quotes/{id}', 'quote')->name('quote');
-    Route::get('/admin/reports/statement', 'statement')->name('statement');
+    Route::get('/admin/reports/statements', 'statement')->name('statements');
+    Route::get('/admin/reports/statements/{id}', 'statement')->name('statement');
 });
 
 

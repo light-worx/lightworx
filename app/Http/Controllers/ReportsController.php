@@ -17,13 +17,20 @@ class ReportsController extends Controller
         $this->invoice($id,"Quotation");
     }
 
-    public function letterhead($title, $type, $clientName, $clientContact,$clientEmail){
+    public function setupPdf(){
         $pdf = new tFPDF();
         $pdf->AddFont('DejaVu','','DejaVuSans.ttf',true);
         $pdf->AddFont('DejaVu', 'B', 'DejaVuSans-Bold.ttf', true);
         $pdf->AddFont('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', true);
         $pdf->AddFont('DejaVuCond','','DejaVuSansCondensed.ttf',true);
         $pdf->AddFont('DejaVuCond', 'B', 'DejaVuSansCondensed-Bold.ttf', true);
+        return $pdf;
+    }
+
+    public function letterhead($title, $type, $clientName, $clientContact,$clientEmail,$pdf=null){
+        if (!$pdf){
+            $pdf=$this->setupPdf();
+        }
         $logo=url('/') . "/lightworx/images/lightworx.png";
         $pdf->AddPage('P');
         $pdf->SetTitle($title);
@@ -45,6 +52,8 @@ class ReportsController extends Controller
         $pdf->SetFont('DejaVu', '', 10);
         $pdf->text(15,75,"Attention: " . $clientContact);
         $pdf->text(15,80,$clientEmail);
+
+        $pdf->RoundedRect(15,90,186,15,1,'1234','F');
 
         // Banking
         $pdf->SetFont('DejaVu', 'B', 11);
@@ -109,7 +118,6 @@ class ReportsController extends Controller
         $pdf->setxy(185,$yy-1.2);
         $pdf->cell(17,0,"R " . number_format($total,2),0,0,'R');
 
-        $pdf->RoundedRect(15,90,186,15,1,'1234','F');
         $pdf->SetTextColor(255,255,255);
         $pdf->SetFont('DejaVu', '', 9);
         $pdf->text(17,95,$type);
@@ -130,6 +138,7 @@ class ReportsController extends Controller
     }
 
     public function statement(){
+        $pdf=null;
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
         $clientsOwing = Client::get()->filter(function ($client) {
@@ -177,11 +186,64 @@ class ReportsController extends Controller
                     'amount' => -$payment->amount
                 ];
             }
+            $closingBalance = $client->balance;
             $title="Statement - " . $client->client . " - " . date("j M Y");
-            $pdf = $this->letterhead($title,"Statement",$client->client,$client->contact_firstname . " " . $client->contact_surname, $client->contact_email);
-            $pdf->Output('I',$title);
+            $pdf = $this->letterhead($title,"Statement",$client->client,$client->contact_firstname . " " . $client->contact_surname, $client->contact_email,$pdf);
+
+            $pdf->SetTextColor(255,255,255);    
+            $pdf->SetFont('DejaVu', '', 9);
+            $pdf->text(112,95,"Date");
+            $pdf->text(167,95,"Total");
+            $pdf->SetFont('DejaVu', 'B', 11);
+            $pdf->text(17,101,"Lightworx statement");
+            $pdf->text(112,101,date('d M Y'));
+            $pdf->text(167,101,"R " . number_format($closingBalance,2));
+            $pdf->SetTextColor(0,0,0);
+            $yy=120;
+            $pdf->SetFont('DejaVu', 'B', 10);
+            $pdf->text(15,$yy,"Date");
+            $pdf->text(35,$yy,"Description");
+            $pdf->setxy(140,$yy-1.2);
+            $pdf->cell(17,0,"Debit",0,0,'R');
+            $pdf->setxy(160,$yy-1.2);
+            $pdf->cell(17,0,"Credit",0,0,'R');
+            $pdf->setxy(183,$yy-1.2);
+            $pdf->cell(17,0,"Balance",0,0,'R');
+            $yy=$yy+5;
+            $pdf->SetFont('DejaVu', '', 10);
+            $pdf->text(15,$yy,date('d M',strtotime($monthStart)));
+            $pdf->text(35,$yy,"Opening balance");
+            $pdf->setxy(183,$yy-1.2);
+            $pdf->cell(17,0,number_format($openingBalance,2),0,0,'R');
+            $yy=$yy+2;
+            $runningtotal=$openingBalance;
+            foreach ($details as $detail){
+                $runningtotal=$runningtotal + $detail['amount'];
+                $yy=$yy+5;
+                $pdf->text(15,$yy,date('d M',strtotime($detail['date'])));
+                $pdf->text(35,$yy,$detail['details']);
+                if ($detail['amount']<0){
+                    $pdf->setxy(160,$yy-1.2);
+                    $pdf->cell(17,0,number_format(-$detail['amount'],2),0,0,'R');
+                } else {
+                    $pdf->setxy(140,$yy-1.2);
+                    $pdf->cell(17,0,number_format($detail['amount'],2),0,0,'R');
+                }
+                $pdf->setxy(183,$yy-1.2);
+                $pdf->cell(17,0,number_format($runningtotal,2),0,0,'R');
+            }
+            $yy = $yy + 12;
+            $pdf->SetFont('DejaVu', 'B', 10);
+            if ($runningtotal>0){
+                $pdf->text(15,$yy,"Balance due:");
+            } else {
+                $pdf->text(15,$yy,"Balance due to you:");
+            }
+
+            $pdf->setxy(183,$yy-1.2);
+            $pdf->cell(17,0,"R " . number_format($runningtotal,2),0,0,'R');
         }
-        $closingBalance = $client->balance;
+        $pdf->Output('I',$title);
     }
 
     public function statementPdf($clientId){
