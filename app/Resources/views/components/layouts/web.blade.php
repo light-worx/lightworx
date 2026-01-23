@@ -43,11 +43,11 @@
 
 <body>
   <main class="main">
-    <div class="d-flex justify-content-center my-2">
-      <button id="installPwaBtn" class="btn btn-primary btn-md d-none">
-          <i class="bi bi-download me-2"></i> Install App
-      </button>
-    </div>
+    <!-- <div class="d-flex justify-content-center my-2"> -->
+      <!-- <button id="installPwaBtn" class="btn btn-primary btn-md d-none"> -->
+          <!-- <i class="bi bi-download me-2"></i> Install App -->
+      <!-- </button> -->
+    <!-- </div> -->
     {{$slot}}
   </main>
 
