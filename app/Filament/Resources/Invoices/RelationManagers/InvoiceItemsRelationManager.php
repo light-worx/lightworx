@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Invoices\RelationManagers;
 
-use App\Models\Invoice;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -14,7 +13,6 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 
 class InvoiceItemsRelationManager extends RelationManager
 {
@@ -71,10 +69,22 @@ class InvoiceItemsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
+                    ->after(function () {
+                        $this->getOwnerRecord()->refresh();
+                        $this->dispatch('refreshInvoiceForm');
+                    }),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->after(function () {
+                        $this->getOwnerRecord()->refresh();
+                        $this->dispatch('refreshInvoiceForm');
+                    }),
                 DeleteAction::make()
+                    ->after(function () {
+                        $this->getOwnerRecord()->refresh();
+                        $this->dispatch('refreshInvoiceForm');
+                    })
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

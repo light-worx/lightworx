@@ -28,6 +28,7 @@ class InvoiceForm
                     ->placeholder('Not sent yet'),
                 TextEntry::make('total')
                     ->numeric('2')
+                    ->live()
                     ->hiddenOn('create')
             ]);
     }

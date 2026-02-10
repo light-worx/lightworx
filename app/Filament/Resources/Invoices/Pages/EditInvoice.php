@@ -15,7 +15,9 @@ class EditInvoice extends EditRecord
 {
     protected static string $resource = InvoiceResource::class;
 
-    protected $listeners = ['refresh-total' => 'refreshTotal'];
+    protected $listeners = [
+        'refreshInvoiceForm' => '$refresh',
+    ];
 
     public function refreshTotal()
     {
