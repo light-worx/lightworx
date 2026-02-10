@@ -49,6 +49,7 @@ class EditInvoice extends EditRecord
                     $attachname = 'Invoice_' . $this->record->id . '.pdf';
                     Mail::html($body, function ($message) use ($email, $subject, $attachdata, $attachname) {
                         $message->to($email)
+                            ->bcc('michael@bishop.net.za')
                             ->subject($subject)
                             ->from('admin@lightworx.co.za')
                             ->attachData(base64_decode($attachdata), $attachname, ['mime' => 'application/pdf']);
