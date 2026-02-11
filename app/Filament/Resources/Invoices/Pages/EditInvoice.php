@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Invoices\Pages;
 
 use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Mail\InvoiceMail;
 use App\Models\Client;
 use App\Models\Invoice;
 use Filament\Actions\Action;
@@ -40,21 +41,19 @@ class EditInvoice extends EditRecord
                     
                     $client = $this->record->project->client;
                     $client->account = $client->account + $this->record->total;
-                    $client->save();
-                    
-                    $subject = 'Invoice ' . $this->record->id;
-                    $body = $client->client . " (" . $client->contact_firstname . " " . $client->contact_surname . ")\n\nPlease find invoice " . $this->record->id . " attached.\n\nThank you,\nMichael Bishop";
-                    $email = $client->contact_email;
+                    $client->save();                    
                     $attachdata = base64_encode(app('App\Http\Controllers\ReportsController')->invoice($this->record->id, 'Invoice', true));
                     $attachname = 'Invoice_' . $this->record->id . '.pdf';
-                    Mail::html($body, function ($message) use ($email, $subject, $attachdata, $attachname) {
-                        $message->to($email)
-                            ->bcc('michael@bishop.net.za')
-                            ->subject($subject)
-                            ->from('admin@lightworx.co.za')
-                            ->attachData(base64_decode($attachdata), $attachname, ['mime' => 'application/pdf']);
-                    });
-                    
+                    $maildata = [
+                        'clientName' => $client->client,
+                        'clientEmail' => $client->contact_email,
+                        'contactFirstName' => $client->contact_firstname,
+                        'contactSurname' => $client->contact_surname,
+                        'invoiceId' => $this->record->id,
+                        'attachName' => $attachname,
+                        'attachData' => $attachdata
+                    ];
+                    Mail::send(new InvoiceMail($maildata));
                     Notification::make()
                         ->title('Invoice emailed to ' . $client->client)
                         ->success()
