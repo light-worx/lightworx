@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "876686684942c54d540f0326eb6a5729",
+    "content-hash": "232906b129a60dbe5b5570b771d35b3b",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3292,6 +3292,63 @@
             "time": "2026-01-15T06:54:53+00:00"
         },
         {
+            "name": "light-worx/filament-reports",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/light-worx/filament-reports.git",
+                "reference": "100432f10b8b70db33a12590410b3efca0694c3d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/light-worx/filament-reports/zipball/100432f10b8b70db33a12590410b3efca0694c3d",
+                "reference": "100432f10b8b70db33a12590410b3efca0694c3d",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0|^5.0",
+                "php": "^8.3",
+                "setasign/tfpdf": "^1.3"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.13.1",
+                "nunomaduro/collision": "^7.8.1|^8.0",
+                "orchestra/testbench": "^9.0|^10.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Lightworx\\FilamentReports\\FilamentReportsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Lightworx\\FilamentReports\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Bishop",
+                    "email": "admin@lightworx.co.za",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A Filament plugin for creating PDF reports using FPDF",
+            "homepage": "https://github.com/light-worx/filament-reports",
+            "support": {
+                "issues": "https://github.com/light-worx/filament-reports/issues",
+                "source": "https://github.com/light-worx/filament-reports/tree/master"
+            },
+            "time": "2026-01-22T09:40:52+00:00"
+        },
+        {
             "name": "light-worx/filament-settings",
             "version": "dev-master",
             "source": {
@@ -5281,6 +5338,60 @@
                 }
             ],
             "time": "2022-12-17T21:53:22+00:00"
+        },
+        {
+            "name": "setasign/tfpdf",
+            "version": "v1.33",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Setasign/tFPDF.git",
+                "reference": "050de12ab5359ce475dab49bae5cedbcf455f708"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Setasign/tFPDF/zipball/050de12ab5359ce475dab49bae5cedbcf455f708",
+                "reference": "050de12ab5359ce475dab49bae5cedbcf455f708",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "tfpdf.php",
+                    "font/unifont/ttfonts.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-2.1"
+            ],
+            "authors": [
+                {
+                    "name": "Ian Back"
+                },
+                {
+                    "name": "Tycho Veltmeijer",
+                    "email": "tfpdf@tychoveltmeijer.nl",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "Olivier Plathey",
+                    "email": "oliver@fpdf.org",
+                    "homepage": "http://fpdf.org/"
+                }
+            ],
+            "description": "This class is a modified version of FPDF that adds UTF-8 support. As of version 1.31 it is based on FPDF 1.82. Before it was based on FPDF 1.7.",
+            "homepage": "http://fpdf.org/en/script/script92.php",
+            "keywords": [
+                "fpdf",
+                "pdf",
+                "tfpdf",
+                "unicode"
+            ],
+            "support": {
+                "issues": "https://github.com/Setasign/tFPDF/issues",
+                "source": "https://github.com/Setasign/tFPDF/tree/v1.33"
+            },
+            "time": "2022-12-20T10:26:07+00:00"
         },
         {
             "name": "spatie/invade",
@@ -10750,6 +10861,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "light-worx/filament-reports": 20,
         "light-worx/filament-settings": 20
     },
     "prefer-stable": true,
@@ -10757,6 +10869,6 @@
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }
