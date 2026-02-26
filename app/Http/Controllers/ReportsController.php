@@ -101,7 +101,6 @@ class ReportsController extends Controller
             $yy=$yy+6;
             foreach ($inv->invoiceitems as $item){
                 $pdf->text(15,$yy,date('d M',strtotime($item->itemdate    )));
-                $pdf->text(35,$yy,$item->details);
                 $pdf->setxy(140,$yy-1.2);
                 $pdf->cell(12,0,$item->quantity,0,0,'C');
                 $pdf->setxy(160,$yy-1.2);
@@ -109,7 +108,9 @@ class ReportsController extends Controller
                 $pdf->setxy(185,$yy-1.2);
                 $pdf->cell(17,0,number_format($item->quantity * $item->unit_price,2),0,0,'R');
                 $total=$total + ($item->quantity *$item->unit_price);
-                $yy=$yy+5;
+                $pdf->setXy(34,$yy-3);
+                $pdf->multicell(102,4,$item->details);
+                $yy=$pdf->getY()+4.5;
             }
         }
         $yy = $yy + 2;
