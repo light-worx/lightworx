@@ -2,20 +2,19 @@
 
 namespace App\Reports;
 
+use App\Models\Invoice;
 use Illuminate\Support\Facades\Route;
 use Lightworx\FilamentReports\Reports\BaseReport;
-use Modules\Worship\Models\Chord;
-use Modules\Worship\Models\Song;
 
-class SongReport extends BaseReport
+class InvoiceReport extends BaseReport
 {
-    protected $song;
+    protected $invoice;
 
     public function __construct()
     {
         parent::__construct();
-        $this->config['default_font']['family'] = 'Courier';
-        $this->config['default_font']['size'] = 11;
+        $this->config['default_font']['family'] = 'Arial';
+        $this->config['default_font']['size'] = 12;
         $this->config['page']['margins']['left'] = 15;
         $this->config['page']['margins']['right'] = 10;
         $this->config['page']['margins']['top'] = 20;
@@ -24,15 +23,15 @@ class SongReport extends BaseReport
 
     public static function routes(): void
     {
-        Route::get('/admin/worship/reports/songs/{song}', function ($songId) {
-            $song = Song::findOrFail($songId);
-            return (new static())->setSong($song)->handle();
-        })->name('reports.song');
+        Route::get('/admin/reports/invoices/{id}', function ($id) {
+            $inv=Invoice::with('invoiceitems','project.client')->where('id',$id)->first();
+            return (new static())->setInvoice($inv)->handle();
+        })->name('reports.invoice');
     }
 
-    public function setSong($song): static
+    public function setInvoice($invoice): static
     {
-        $this->song = $song;
+        $this->invoice = $invoice;
         return $this;
     }
 
@@ -42,202 +41,101 @@ class SongReport extends BaseReport
             return;
         }
         $this->SetY($this->config['page']['margins']['top'] - 5);
-        if ($this->reportTitle) {
+        $logo=url('/') . "/lightworx/images/lightworx.png";
+        $this->SetFont('Arial', 'B', 12);
+        $this->Image($logo,168,8,45);
+        $this->text(15, 10, "Invoice");
+        $this->SetTextColor(100,100,100);
+        $this->text(15, 25, "Lightworx");
+        $this->SetFont('Arial', '', 10);
+        $this->text(15, 30, "Open source solutions");
+        $this->text(15, 34, "www.lightworx.co.za");
+        $this->text(15, 38, setting('email_address'));
+        $this->SetTextColor(0,0,0);
 
-            $this->SetFont('Courier', '', 10);
-            $this->SetXY(171,14);
-            $this->Cell(30, 0, 'Key: ' . $this->song->key, 0, 0, 'R');
-            $this->SetXY(171,19);
-            $this->Cell(30, 0, $this->song->tempo, 0, 0, 'R');
-            $this->SetFont('Courier', 'B', 14);
-            $this->Text(15, 16, $this->reportTitle);
-            $this->SetFont('Courier', 'I', 10);
-            $this->Text(15, 20, $this->song->author);
-            $this->SetFont('Courier', '', 10);
+        // Client
+        $this->SetFont('Arial', 'B', 11);
+        $this->text(15,70,$this->invoice->project->client->client);
+        $this->SetFont('Arial', '', 11);
+        $this->text(15,75,"Attention: " . $this->invoice->project->client->contact_firstname . " " . $this->invoice->project->client->contact_surname);
+        $this->text(15,80,$this->invoice->project->client->contact_email);
+        $this->SetFillColor(0,0,0);
+        $this->Rect(15,90,186,15,'F');
+
+        // Banking
+        $this->SetFont('Arial', 'B', 11);
+        $this->text(17,269,"Bank details");
+        $this->SetFont('Arial', '', 10);
+        $banklines=explode(',',setting('bank_details'));
+        foreach ($banklines as $i=>$bank){
+            $this->text(17,274+$i*4,$bank);
         }
         $this->SetDrawColor(0,0,0);
-        $this->SetXY(15,22);
-        $this->Line(
-            $this->config['page']['margins']['left'],
-            $this->GetY(),
-            $this->GetPageWidth() - $this->config['page']['margins']['right'],
-            $this->GetY()
-        );
+        $this->SetXY(15,262);
         $this->Ln(5);
 
-        // Song lyrics
-        $lines=explode(PHP_EOL, $this->song->lyrics);
-        $y=30;
-        $vo=explode(" ",$this->song->verseorder);
-        foreach ($lines as $line) {
-            $line=$this->convert_smart_quotes($line);
-            if (strpos($line, '}')) {
-                $line=str_replace('{', '', $line);
-                $line=str_replace('}', '', $line);
-                $this->SetFont('Courier', 'B', 12);
-                $this->SetTextColor(160, 160, 160);
-                $y=$y+3.5;
-                $shortline = substr($line, 0, 2);
-                $this->text(13, $y, $shortline);
-                $shortline=trim($shortline);
-                $y=$y-3.5;
-                $vos="";
-                foreach ($vo as $kk=>$vv){
-                    if ($vv==$shortline){
-                        $vos.=1+$kk . " ";
-                    }
-                }
-                if ($vos){
-                    $vos=substr($vos,0,-1);
-                }
-                if (strlen($vos)>6){
-                    if (substr($vos,7,1)==" "){
-                        $this->text(170, $y+7, substr($vos,0,7));
-                        $this->text(170, $y+12, substr(trim($vos," "),7));
-                    } else {
-                        $this->text(170, $y+7, substr($vos,0,6));
-                        $this->text(170, $y+12, substr(trim($vos," "),6));
-                    }
-                } else {
-                    $this->text(170, $y+7, $vos);
-                }
-                $this->SetTextColor(0, 0, 0);
-            } else {
-                $this->SetFont('Courier', '', 12);
-                if (strpos($line, ']')) {
-                    $y=$y+3.5;
-                }
-                $x=20;
-                $addme=$x;
-                $chordline="";
-                $minlen=0;
-                for ($i=0; $i<strlen($line); $i++) {
-                    if ($line[$i]=='[') {
-                        $chordsub=substr($line, $i);
-                        $chor=substr($chordsub, 1, -1+strpos($chordsub, ']'));
-                        $minlen=$this->GetStringWidth($chor);
-                        $chordline.=$chor;
-                        $this->SetFont('Courier', '', 12);
-                        $i=$i+strlen($chor)+1;
-                    } else {
-                        $this->text($x, $y, $line[$i]);
-                        if ($minlen ==0){
-                            $chordline.=" ";
-                        } else {
-                            $minlen=$minlen-$this->GetStringWidth(" ");
-                            if ($minlen < 0){
-                                $minlen=0;
-                            }
-                        }
-                        $x=$x+$this->GetStringWidth($line[$i]);
-                    }
-                }
-                $this->SetFont('Courier', 'B', 12);
-                $this->text(20, $y-3.5, $chordline);
-                $this->SetFont('Courier', '', 12);
+        $this->text(145,70,"Invoice No:");
+        $this->setxy(150,68.8);
+        $this->cell(52,0,$this->invoice->id,0,0,'R');
+        $this->text(145,75,"Date:");
+        $this->setxy(150,73.8);
+        $this->cell(52,0,date('d M Y'),0,0,'R');
+        $this->text(145,80,"Reference:");
+        $this->setxy(150,78.8);
+        $this->cell(52,0,"Inv " . $this->invoice->id,0,0,'R');
+        $yy=117;
+        $total=0;
+        if (count($this->invoice->invoiceitems)){
+            $this->SetFont('Arial', 'B', 10);
+            $this->text(15,$yy,"Date");
+            $this->text(35,$yy,"Description");
+            $this->text(140,$yy,"Hours");
+            $this->text(160,$yy,"Rate (R)");
+            $this->text(187,$yy,"Amount");
+            $this->SetFont('Arial', '', 10);
+            $yy=$yy+6;
+            foreach ($this->invoice->invoiceitems as $item){
+                $this->text(15,$yy,date('d M',strtotime($item->itemdate    )));
+                $this->setxy(140,$yy-1.2);
+                $this->cell(12,0,$item->quantity,0,0,'C');
+                $this->setxy(160,$yy-1.2);
+                $this->cell(16,0,$item->unit_price,0,0,'C');
+                $this->setxy(184,$yy-1.2);
+                $this->cell(17,0,number_format($item->quantity * $item->unit_price,2),0,0,'R');
+                $total=$total + ($item->quantity *$item->unit_price);
+                $this->setXy(34,$yy-3);
+                $this->multicell(102,4,$item->details);
+                $yy=$this->getY()+4.5;
             }
-            $y=$y+3.5;
         }
+        $yy = $yy + 2;
+        $this->SetFont('Arial', 'B', 10);
+        $this->text(15,$yy,"Total");
+        $this->setxy(184,$yy-1.2);
+        $this->cell(17,0,"R " . number_format($total,2),0,0,'R');
 
-        // Chord list
-        $this->SetTextColor(0,0,0);
-        $y=26;
-        $chords = $this->_getChords($this->song->lyrics);
-        if (is_array($chords)){
-            foreach ($chords as $chord) {
-                $this->SetFont('Courier', '', 7);
-                $dbchord = Chord::where('chord',$chord)->get();
-                $x1=190;
-                if (count($dbchord)) {
-                    $this->setxy(180,$y);
-                    $this->SetFont('Courier', 'B', 10);
-                    $this->cell(30,5,$chord,0,0,'C');
-                    if ($dbchord[0]->fret==0){
-                        $this->line(190,$y+5,200,$y+5);
-                        $f=0;
-                    } else {
-                        $f=1;
-                        $this->text(202,$y+8,$dbchord[0]->fret);
-                    }
-                    for ($i=6;$i>0;$i--){
-                        $svar="s" . $i;
-                        if ($dbchord[0]->{$svar}=="x"){
-                            $this->SetDrawColor(175,175,175);
-                            $this->line($x1,$y+5,$x1,$y+17);
-                        } else {
-                            $this->SetDrawColor(0,0,0);
-                            $this->line($x1,$y+5,$x1,$y+17);
-                        }
-                        $this->SetDrawColor(0,0,0);
-                        $x1=$x1+2;
-                        if ($i<6){
-                            $this->line(190,2+$y+$i*3,200,2+$y+$i*3);
-                        }
-                    }
-                    $x=188.5;
-                    $cdata=array(
-                        "s6"=>$dbchord[0]->s6,
-                        "s5"=>$dbchord[0]->s5,
-                        "s4"=>$dbchord[0]->s4,
-                        "s3"=>$dbchord[0]->s3,
-                        "s2"=>$dbchord[0]->s2,
-                        "s1"=>$dbchord[0]->s1
-                    );
-                    foreach ($cdata as $cd){
-                        if ($cd !== 'x'){
-                            $cd = $cd - $dbchord[0]->fret + $f;
-                            $this->SetFont('Courier', 'B', 14);
-                            if ($cd > 0){
-                                $this->SetFont('Courier', 'B', 20);
-                                $circle=url('/') . "/images/circle.png";
-                                $this->Image($circle,$x+0.5,$y+2.5+3*$cd,2,2);
-                                $this->SetFont('Courier', 'B', 14);
-                            }
-                            $this->SetFont('Courier', '', 7);
-                        }
-                        $x=$x+2;
-                    }
-                } else {
-                    $this->SetTextColor(125,125,125);
-                    $this->setxy(180,$y);
-                    $this->SetFont('Courier', 'B', 10);
-                    $this->cell(30,5,$chord,0,0,'C');            
-                    $this->SetTextColor(0,0,0);
-                    $this->SetDrawColor(125,125,125);
-                    for ($i=1;$i<7;$i++){
-                        $this->line($x1,$y+5,$x1,$y+17);
-                        $x1=$x1+2;
-                        if ($i<6){
-                            $this->line(190,2+$y+$i*3,200,2+$y+$i*3);
-                        }
-                    }
-                    $this->SetFillColor(0,0,0);
-                }
-                $y=$y+18;
-            }
-        }
+        $this->SetTextColor(255,255,255);
+        $this->SetFont('Arial', '', 9);
+        $this->text(17,95,"Invoice");
+        $this->text(37,95,"Project");
+        $this->text(112,95,"Date");
+        $this->text(167,95,"Total");
+        $this->SetFont('Arial', 'B', 11);
+        $this->text(17,101,$this->invoice->id);
+        $this->text(37,101,$this->invoice->project->project);
+        $this->text(112,101,date('d M Y'));
+        $this->text(167,101,"R " . number_format($total,2));
     }
 
     public function generate(): void
     {
-        $this->setReportTitle($this->song->title);
-        $this->AddPage();
+        $title="Lightworx Invoice " . $this->invoice->id . " - " . date("j M Y");
+        $this->setReportTitle($title);
+        $this->AddPage('P', 'A4');
     }
 
     protected function getFilename(): string
     {
-        return 'song-report-' . now()->format('Y-m-d') . '.pdf';
-    }
-
-    private function _getChords($lyrics)
-    {
-        preg_match_all("/\[([^\]]*)\]/", $lyrics, $matches);
-        $chords=array_unique($matches[1]);
-        asort($chords);
-        if (count($chords)) {
-            return $chords;
-        } else {
-            return "";
-        }
+        return 'lightworx-invoice-' . $this->invoice->id . '-' . now()->format('Y-m-d') . '.pdf';
     }
 }
