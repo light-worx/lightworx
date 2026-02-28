@@ -17,6 +17,11 @@ class Client extends Model
         return $this->hasManyThrough(Invoice::class, Project::class);
     }
 
+    public function sentinvoices(): HasManyThrough
+    {
+        return $this->hasManyThrough(Invoice::class, Project::class)->where('invoicedate', '!=', null);
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
@@ -33,7 +38,7 @@ class Client extends Model
 
     public function getBalanceAttribute()
     {
-        $totalInvoiced = $this->invoices->sum->total;
+        $totalInvoiced = $this->sentinvoices->sum->total;
         $totalPaid = $this->payments->sum('amount');
         return $totalInvoiced - $totalPaid;
     }
