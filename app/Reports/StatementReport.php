@@ -3,6 +3,7 @@
 namespace App\Reports;
 
 use App\Models\Client;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Lightworx\FilamentReports\Reports\BaseReport;
 
@@ -76,13 +77,13 @@ class StatementReport extends BaseReport
         $this->Ln(5);
 
         $this->setxy(150,78.8);
-        $this->cell(52,0,date('d M Y'),0,0,'R');
+        $this->cell(52,0,date('j M Y',strtotime($this->date)),0,0,'R');
         $yy=117;
         $total=0;
         $yy = $yy + 2;
 
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
+        $monthStart = Carbon::parse($this->date)->startOfMonth()->toDateString();
+        $monthEnd = Carbon::parse($this->date)->endOfMonth()->toDateString();
         $openingBalance = $this->client->invoices()
             ->where('invoicedate', '<', $monthStart)
             ->get()
@@ -121,7 +122,7 @@ class StatementReport extends BaseReport
         $this->text(167,95,"Total");
         $this->SetFont('Arial', 'B', 11);
         $this->text(17,101,date('F Y', strtotime($this->date)));
-        $this->text(112,101,date('d M Y'));
+        $this->text(112,101,date('d M Y',strtotime($this->date)));
         $this->text(167,101,"R " . number_format($closingBalance,2));
         $this->SetTextColor(0,0,0);
         $yy=120;
