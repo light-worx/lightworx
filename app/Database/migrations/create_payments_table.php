@@ -13,7 +13,7 @@ return new class extends Migration
             $table->increments('id')->unsigned();
             $table->date('paymentdate');
             $table->integer('client_id');
-            $table->decimal('amount', 6,2)->nullable();
+            $table->decimal('amount', 7,2)->nullable();
         });
     }
     
